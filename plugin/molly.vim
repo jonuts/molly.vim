@@ -86,6 +86,9 @@ endfunction
 
 function HandleKeyBackspace()
   let s:query = strpart(s:query, 0, strlen(s:query) - 1)
+  let s:filelist += s:badlist
+  let s:badlist = []
+
   call ExecuteQuery()
 endfunction
 
