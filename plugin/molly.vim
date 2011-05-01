@@ -18,6 +18,7 @@ function! s:MollyController()
   call BindKeys()
   call SetLocals()
   let s:filelist = split(system('find . ! -regex ".*/\..*" -type f -print'), "\n")
+  let s:badlist = []
   call WriteToBuffer(s:filelist)
 endfunction
 
@@ -137,31 +138,23 @@ function SetLocals()
 endfunction
 
 function ExecuteQuery()
-  let newlist = []
-
   let querycharlist = split(s:query, '\zs')
   let querycharlen = len(querycharlist)
+  let matcher = join(querycharlist, '.*')
 
-  let initialquery = join(querycharlist, '\a*_')
-  let firstquery = '/' . initialquery
-  let secondquery = initialquery
+  let index = 0
+  for name in s:filelist
+    if name !~# matcher
+      call add(s:badlist, name)
+      call remove(s:filelist, index)
 
-  for n in s:filelist
-    let filesplit = split(n, '/')
-    let filename = '/' . get(filesplit, len(filesplit) - 1)
-
-    if filename =~ firstquery
-      call insert(newlist, n, 0)
-    elseif filename =~ secondquery
-      call insert(newlist, n, 0)
-    elseif n =~ s:query
-      call add(newlist, n)
+      let index -= 1
     endif
+
+    let index += 1
   endfor
 
-  call WriteToBuffer(newlist)
-  unlet newlist
-  unlet querycharlist
+  call WriteToBuffer(s:filelist)
   echo ">> " . s:query
 endfunction
 
