@@ -65,6 +65,8 @@ endfunction
 
 function HandleKey(key)
   let s:query = s:query . a:key
+  call add(s:badlist, [])
+
   call ExecuteQuery()
 endfunction
 
@@ -85,9 +87,13 @@ function HandleKeyCursorRight()
 endfunction
 
 function HandleKeyBackspace()
+  if !len(s:query)
+    return 0
+  endif
+
   let s:query = strpart(s:query, 0, strlen(s:query) - 1)
-  let s:filelist += s:badlist
-  let s:badlist = []
+  let lastbads = remove(s:badlist, -1)
+  let s:filelist += lastbads
 
   call ExecuteQuery()
 endfunction
@@ -148,7 +154,7 @@ function ExecuteQuery()
   let index = 0
   for name in s:filelist
     if name !~# matcher
-      call add(s:badlist, name)
+      call add(s:badlist[-1], name)
       call remove(s:filelist, index)
 
       let index -= 1
