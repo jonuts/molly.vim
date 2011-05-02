@@ -8,6 +8,10 @@
 " ============================================================================
 let s:Molly_version = '0.0.2'
 
+if !exists("g:MollyMaxSort")
+  let g:MollyMaxSort = 100
+endif
+
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>x :Molly<CR>
 
@@ -148,9 +152,9 @@ endfunction
 
 function ExecuteQuery()
   let querycharlist = split(s:query, '\zs')
-  let querycharlen = len(querycharlist)
   let matcher = join(querycharlist, '.*')
 
+  " Filter out filenames that do not match
   let index = 0
   for name in s:filelist
     if name !~# matcher
@@ -163,8 +167,58 @@ function ExecuteQuery()
     let index += 1
   endfor
 
-  call WriteToBuffer(s:filelist)
+  " Sort using a poor longest common string implementation
+  if len(s:filelist) <= g:MollyMaxSort
+    let sortedlist = []
+    let filesorter = {}
+    for name in s:filelist
+      let matchlen = MatchLen(name, s:query)
+      if has_key(filesorter, matchlen)
+        call add(filesorter[matchlen], name)
+      else
+        let filesorter[matchlen] = [name]
+      endif
+    endfor
+
+    for val in values(filesorter)
+      let sortedlist += val
+    endfor
+
+    call WriteToBuffer(sortedlist)
+    unlet sortedlist
+  else
+    call WriteToBuffer(s:filelist)
+  endif
+
+  unlet querycharlist
+
   echo ">> " . s:query
+endfunction
+
+function MatchLen(input, matcher)
+  let maxvalue = 0
+  let table = []
+
+  for i in range(0, len(a:input))
+    call add(table, repeat([0], len(a:matcher)+1))
+  endfor
+
+  let input = split(a:input, '\zs')
+  let matcher = split(a:matcher,  '\zs')
+
+  for i in range(0, len(input)-1)
+    for j in range(0, len(matcher)-1)
+      if input[i] == matcher[j]
+        let table[i+1][j+1] = (table[i][j] + 1)
+
+        if table[i+1][j+1] > maxvalue
+          let maxvalue = table[i+1][j+1]
+        endif
+      endif
+    endfor
+  endfor
+
+  return maxvalue
 endfunction
 
 function WriteToBuffer(files)
