@@ -160,11 +160,9 @@ function ExecuteQuery()
     if name !~# matcher
       call add(s:badlist[-1], name)
       call remove(s:filelist, index)
-
-      let index -= 1
+    else
+      let index += 1
     endif
-
-    let index += 1
   endfor
 
   " Sort using a poor longest common string implementation
