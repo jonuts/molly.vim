@@ -167,23 +167,26 @@ function ExecuteQuery()
 
   " Sort using a poor longest common string implementation
   if len(s:filelist) <= g:MollyMaxSort
-    let sortedlist = []
     let filesorter = {}
+    let sortedlist = []
+
     for name in s:filelist
-      let matchlen = MatchLen(name, s:query)
-      if has_key(filesorter, matchlen)
-        call add(filesorter[matchlen], name)
+      let matchkey = 1000 - MatchLen(name)
+
+      if has_key(filesorter, matchkey)
+        call add(filesorter[matchkey], name)
       else
-        let filesorter[matchlen] = [name]
+        let filesorter[matchkey] = [name]
       endif
     endfor
 
-    for val in values(filesorter)
-      let sortedlist += val
+    for filelist in values(filesorter)
+      let sortedlist += filelist
     endfor
 
     call WriteToBuffer(sortedlist)
     unlet sortedlist
+    unlet filesorter
   else
     call WriteToBuffer(s:filelist)
   endif
@@ -193,28 +196,32 @@ function ExecuteQuery()
   echo ">> " . s:query
 endfunction
 
-function MatchLen(input, matcher)
+function MatchLen(input)
   let maxvalue = 0
   let table = []
 
   for i in range(0, len(a:input))
-    call add(table, repeat([0], len(a:matcher)+1))
+    call add(table, repeat([0], len(s:query)))
   endfor
 
   let input = split(a:input, '\zs')
-  let matcher = split(a:matcher,  '\zs')
+  let matcher = split(s:query,  '\zs')
 
-  for i in range(0, len(input)-1)
-    for j in range(0, len(matcher)-1)
+  for i in range(1, len(input)-1)
+    for j in range(1, len(matcher)-1)
       if input[i] == matcher[j]
-        let table[i+1][j+1] = (table[i][j] + 1)
+        let table[i][j] = (table[i-1][j-1] + 1)
 
-        if table[i+1][j+1] > maxvalue
-          let maxvalue = table[i+1][j+1]
+        if table[i][j] > maxvalue
+          let maxvalue = table[i][j]
         endif
       endif
     endfor
   endfor
+
+  unlet table
+  unlet input
+  unlet matcher
 
   return maxvalue
 endfunction
