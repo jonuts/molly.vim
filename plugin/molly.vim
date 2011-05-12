@@ -153,6 +153,9 @@ endfunction
 function ExecuteQuery()
   let querycharlist = split(s:query, '\zs')
   let matcher = join(querycharlist, '.*')
+  let filesorter = {}
+  let sortedlist = []
+  let dosort = len(s:filelist) <= g:MollyMaxSort
 
   " Filter out filenames that do not match
   let index = 0
@@ -162,35 +165,31 @@ function ExecuteQuery()
       call remove(s:filelist, index)
     else
       let index += 1
+
+      if dosort
+        let matchkey = 1000 - MatchLen(name)
+
+        if has_key(filesorter, matchkey)
+          call add(filesorter[matchkey], name)
+        else
+          let filesorter[matchkey] = [name]
+        endif
+      end
     endif
   endfor
 
-  " Sort using a poor longest common string implementation
-  if len(s:filelist) <= g:MollyMaxSort
-    let filesorter = {}
-    let sortedlist = []
-
-    for name in s:filelist
-      let matchkey = 1000 - MatchLen(name)
-
-      if has_key(filesorter, matchkey)
-        call add(filesorter[matchkey], name)
-      else
-        let filesorter[matchkey] = [name]
-      endif
-    endfor
-
+  if dosort
     for filelist in values(filesorter)
       let sortedlist += filelist
     endfor
 
     call WriteToBuffer(sortedlist)
-    unlet sortedlist
-    unlet filesorter
   else
     call WriteToBuffer(s:filelist)
   endif
 
+  unlet sortedlist
+  unlet filesorter
   unlet querycharlist
 
   echo ">> " . s:query
