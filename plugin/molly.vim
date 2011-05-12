@@ -224,10 +224,8 @@ function MatchLen(input)
 
     " Stop searching for maxvalue if it is not possible for it to be any
     " greater.
-    if !hasmatch
-      if maxvalue >= inputlen - i - 1
-        break
-      endif
+    if !hasmatch && maxvalue >= inputlen - i - 1
+      break
     endif
   endfor
 
