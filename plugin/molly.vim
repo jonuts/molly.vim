@@ -9,7 +9,7 @@
 let s:Molly_version = '0.0.2'
 
 if !exists("g:MollyMaxSort")
-  let g:MollyMaxSort = 500
+  let g:MollyMaxSort = 750
 endif
 
 command -nargs=? -complete=dir Molly call <SID>MollyController()
@@ -198,18 +198,20 @@ endfunction
 function MatchLen(input)
   let maxvalue = 0
   let table = []
+  let inputlen = len(a:input)
+  let matchlen = len(s:query)
 
-  for i in range(0, len(a:input))
-    call add(table, repeat([0], len(s:query)))
+  for i in range(0, inputlen)
+    call add(table, repeat([0], matchlen))
   endfor
 
   let input = split(a:input, '\zs')
   let matcher = split(s:query,  '\zs')
 
-  for i in range(1, len(input)-1)
+  for i in range(1, inputlen-1)
     let hasmatch = 0
 
-    for j in range(1, len(matcher)-1)
+    for j in range(1, matchlen-1)
       if input[i] == matcher[j]
         let hasmatch = 1
         let table[i][j] = (table[i-1][j-1] + 1)
@@ -220,8 +222,10 @@ function MatchLen(input)
       endif
     endfor
 
+    " Stop searching for maxvalue if it is not possible for it to be any
+    " greater.
     if !hasmatch
-      if maxvalue >= len(input[i+1 : -1])
+      if maxvalue >= inputlen - i - 1
         break
       endif
     endif
