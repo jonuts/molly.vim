@@ -207,8 +207,11 @@ function MatchLen(input)
   let matcher = split(s:query,  '\zs')
 
   for i in range(1, len(input)-1)
+    let hasmatch = 0
+
     for j in range(1, len(matcher)-1)
       if input[i] == matcher[j]
+        let hasmatch = 1
         let table[i][j] = (table[i-1][j-1] + 1)
 
         if table[i][j] > maxvalue
@@ -216,6 +219,12 @@ function MatchLen(input)
         endif
       endif
     endfor
+
+    if !hasmatch
+      if maxvalue >= len(input[i+1 : -1])
+        break
+      endif
+    endif
   endfor
 
   unlet table
