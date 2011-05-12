@@ -9,7 +9,7 @@
 let s:Molly_version = '0.0.2'
 
 if !exists("g:MollyMaxSort")
-  let g:MollyMaxSort = 100
+  let g:MollyMaxSort = 500
 endif
 
 command -nargs=? -complete=dir Molly call <SID>MollyController()
@@ -160,7 +160,7 @@ function ExecuteQuery()
   " Filter out filenames that do not match
   let index = 0
   for name in s:filelist
-    if name !~# matcher
+    if split(name, "\/")[-1] !~# matcher
       call add(s:badlist[-1], name)
       call remove(s:filelist, index)
     else
@@ -180,7 +180,7 @@ function ExecuteQuery()
 
   if dosort
     for filelist in values(filesorter)
-      let sortedlist += filelist
+      let sortedlist += sort(filelist)
     endfor
 
     call WriteToBuffer(sortedlist)
