@@ -6,6 +6,10 @@
 " License:     MIT
 "
 " ============================================================================
+if exists("g:loaded_Molly") || &cp
+  finish
+endif
+let g:loaded_Molly = 1
 let s:Molly_version = '0.0.2'
 
 if !exists("g:MollyMaxSort")
@@ -15,16 +19,17 @@ endif
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>x :Molly<CR>
 
+
 function! s:MollyController()
   execute "sp molly"
-  call BindKeys()
-  call SetLocals()
+  call s:BindKeys()
+  call s:SetLocals()
 
   if !exists("s:mollyrunonce")
     call s:MollySetup()
     let s:mollyrunonce = 1
   endif
-  call WriteToBuffer(s:filteredlist)
+  call s:WriteToBuffer(s:filteredlist)
 endfunction
 
 function s:MollySetup()
@@ -38,7 +43,7 @@ function s:ResetGlobals()
   let s:filteredlist = copy(s:filelist)
 endfunction
 
-function BindKeys()
+function s:BindKeys()
   let asciilist = range(97,122)
   let asciilist = extend(asciilist, range(32,47))
   let asciilist = extend(asciilist, range(58,90))
@@ -72,45 +77,45 @@ function BindKeys()
   \}
 
   for n in asciilist
-    execute "noremap <buffer> <silent>" . "<Char-" . n . "> :call HandleKey('" . nr2char(n) . "')<CR>"
+    execute "noremap <buffer> <silent>" . "<Char-" . n . "> :call <sid>HandleKey('" . nr2char(n) . "')<CR>"
   endfor
 
   for key in keys(specialChars)
-    execute "noremap <buffer> <silent>" . key  . " :call HandleKey" . specialChars[key] . "()<CR>"
+    execute "noremap <buffer> <silent>" . key  . " :call <sid>HandleKey" . specialChars[key] . "()<CR>"
   endfor
 endfunction
 
-function HandleKey(key)
+function s:HandleKey(key)
   let s:query = s:query . a:key
   call add(s:badlist, [])
 
-  call ExecuteQuery()
+  call s:ExecuteQuery()
 endfunction
 
-function HandleKeyReload()
-  call HandleKeyCancel()
+function s:HandleKeyReload()
+  call s:HandleKeyCancel()
   call s:MollySetup()
   call s:MollyController()
 endfunction
 
-function HandleKeySelectNext()
+function s:HandleKeySelectNext()
   call setpos(".", [0, line(".") + 1, 1, 0])
 endfunction
 
-function HandleKeySelectPrev()
+function s:HandleKeySelectPrev()
   call setpos(".", [0, line(".") - 1, 1, 0])
 endfunction
 
-function HandleKeyCursorLeft()
+function s:HandleKeyCursorLeft()
   echo "left"
 endfunction
 
-function HandleKeyCursorRight()
+function s:HandleKeyCursorRight()
   echo "right"
 endfunction
 
-function HandleKeyBackspace()
-  if !len(s:query)
+function s:HandleKeyBackspace()
+  if len(s:query) <= 0
     return 0
   endif
 
@@ -118,16 +123,16 @@ function HandleKeyBackspace()
   let lastbads = remove(s:badlist, -1)
   let s:filteredlist += lastbads
 
-  call ExecuteQuery()
+  call s:ExecuteQuery()
 endfunction
 
-function HandleKeyCancel()
+function s:HandleKeyCancel()
   call s:ResetGlobals()
 
   execute "q!"
 endfunction
 
-function HandleKeyAcceptSelection()
+function s:HandleKeyAcceptSelection()
   let filename = getline(".")
   execute "q!"
   execute "e " . filename
@@ -135,7 +140,7 @@ function HandleKeyAcceptSelection()
   call s:ResetGlobals()
 endfunction
 
-function HandleKeyAcceptSelectionVSplit()
+function s:HandleKeyAcceptSelectionVSplit()
   let filename = getline(".")
   execute "q!"
   execute "vs " . filename
@@ -143,7 +148,7 @@ function HandleKeyAcceptSelectionVSplit()
   let s:query = ""
 endfunction
 
-function HandleKeyAcceptSelectionSplit()
+function s:HandleKeyAcceptSelectionSplit()
   let filename = getline(".")
   execute "q!"
   execute "sp " . filename
@@ -151,11 +156,11 @@ function HandleKeyAcceptSelectionSplit()
   let s:query = ""
 endfunction
 
-function ClearBuffer()
+function s:ClearBuffer()
   execute ":1,$d"
 endfunction
 
-function SetLocals()
+function s:SetLocals()
   setlocal bufhidden=wipe
   setlocal buftype=nofile
   setlocal noswapfile
@@ -170,7 +175,7 @@ function SetLocals()
   setlocal cursorline
 endfunction
 
-function ExecuteQuery()
+function s:ExecuteQuery()
   let querycharlist = split(s:query, '\zs')
   let matcher = join(querycharlist, '.*')
   let filesorter = {}
@@ -187,7 +192,7 @@ function ExecuteQuery()
       let index += 1
 
       if dosort
-        let matchkey = 1000 - MatchLen(name)
+        let matchkey = 1000 - s:MatchLen(name)
 
         if has_key(filesorter, matchkey)
           call add(filesorter[matchkey], name)
@@ -203,9 +208,9 @@ function ExecuteQuery()
       let sortedlist += sort(filelist)
     endfor
 
-    call WriteToBuffer(sortedlist)
+    call s:WriteToBuffer(sortedlist)
   else
-    call WriteToBuffer(s:filteredlist)
+    call s:WriteToBuffer(s:filteredlist)
   endif
 
   unlet sortedlist
@@ -215,7 +220,7 @@ function ExecuteQuery()
   echo ">> " . s:query
 endfunction
 
-function MatchLen(input)
+function s:MatchLen(input)
   let maxvalue = 0
   let table = []
   let inputlen = len(a:input)
@@ -256,7 +261,7 @@ function MatchLen(input)
   return maxvalue
 endfunction
 
-function WriteToBuffer(files)
-  call ClearBuffer()
+function s:WriteToBuffer(files)
+  call s:ClearBuffer()
   call setline(".", a:files)
 endfunction
