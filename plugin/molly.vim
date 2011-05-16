@@ -15,15 +15,27 @@ endif
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>x :Molly<CR>
 
-let s:query = ""
-
 function! s:MollyController()
   execute "sp molly"
   call BindKeys()
   call SetLocals()
+
+  if !exists("s:mollyrunonce")
+    call s:MollySetup()
+    let s:mollyrunonce = 1
+  endif
+  call WriteToBuffer(s:filteredlist)
+endfunction
+
+function s:MollySetup()
   let s:filelist = split(system('find . ! -regex ".*/\..*" -type f -print'), "\n")
+  call s:ResetGlobals()
+endfunction
+
+function s:ResetGlobals()
+  let s:query = ""
   let s:badlist = []
-  call WriteToBuffer(s:filelist)
+  let s:filteredlist = copy(s:filelist)
 endfunction
 
 function BindKeys()
@@ -97,13 +109,14 @@ function HandleKeyBackspace()
 
   let s:query = strpart(s:query, 0, strlen(s:query) - 1)
   let lastbads = remove(s:badlist, -1)
-  let s:filelist += lastbads
+  let s:filteredlist += lastbads
 
   call ExecuteQuery()
 endfunction
 
 function HandleKeyCancel()
-  let s:query = ""
+  call s:ResetGlobals()
+
   execute "q!"
 endfunction
 
@@ -112,7 +125,7 @@ function HandleKeyAcceptSelection()
   execute "q!"
   execute "e " . filename
   unlet filename
-  let s:query = ""
+  call s:ResetGlobals()
 endfunction
 
 function HandleKeyAcceptSelectionVSplit()
@@ -155,14 +168,14 @@ function ExecuteQuery()
   let matcher = join(querycharlist, '.*')
   let filesorter = {}
   let sortedlist = []
-  let dosort = len(s:filelist) <= g:MollyMaxSort
+  let dosort = len(s:filteredlist) <= g:MollyMaxSort
 
   " Filter out filenames that do not match
   let index = 0
-  for name in s:filelist
+  for name in s:filteredlist
     if split(name, "\/")[-1] !~# matcher
       call add(s:badlist[-1], name)
-      call remove(s:filelist, index)
+      call remove(s:filteredlist, index)
     else
       let index += 1
 
@@ -185,7 +198,7 @@ function ExecuteQuery()
 
     call WriteToBuffer(sortedlist)
   else
-    call WriteToBuffer(s:filelist)
+    call WriteToBuffer(s:filteredlist)
   endif
 
   unlet sortedlist
