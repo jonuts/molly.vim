@@ -67,7 +67,8 @@ function BindKeys()
     \  '<C-h>'   : 'CursorLeft',
     \  '<Left>'  : 'CursorLeft',
     \  '<C-l>'   : 'CursorRight',
-    \  '<Right>' : 'CursorRight'
+    \  '<Right>' : 'CursorRight',
+    \  '<C-r>'   : 'Reload'
   \}
 
   for n in asciilist
@@ -84,6 +85,12 @@ function HandleKey(key)
   call add(s:badlist, [])
 
   call ExecuteQuery()
+endfunction
+
+function HandleKeyReload()
+  call HandleKeyCancel()
+  call s:MollySetup()
+  call s:MollyController()
 endfunction
 
 function HandleKeySelectNext()
