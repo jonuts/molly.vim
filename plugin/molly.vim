@@ -132,28 +132,24 @@ function s:HandleKeyCancel()
   execute "q!"
 endfunction
 
-function s:HandleKeyAcceptSelection()
+function s:AcceptSelection(action)
   let filename = getline(".")
   execute "q!"
-  execute "e " . filename
+  execute a:action . " " . filename
   unlet filename
   call s:ResetGlobals()
 endfunction
 
+function s:HandleKeyAcceptSelection()
+  call s:AcceptSelection("e")
+endfunction
+
 function s:HandleKeyAcceptSelectionVSplit()
-  let filename = getline(".")
-  execute "q!"
-  execute "vs " . filename
-  unlet filename
-  let s:query = ""
+  call s:AcceptSelection("vs")
 endfunction
 
 function s:HandleKeyAcceptSelectionSplit()
-  let filename = getline(".")
-  execute "q!"
-  execute "sp " . filename
-  unlet filename
-  let s:query = ""
+  call s:AcceptSelection("sp")
 endfunction
 
 function s:ClearBuffer()
