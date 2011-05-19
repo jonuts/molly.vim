@@ -2,7 +2,6 @@
 " File:        molly.vim
 " Description: Speed is key!
 " Maintainer:  William Estoque <william.estoque at gmail dot com>
-" Last Change: 23 March, 2010
 " License:     MIT
 "
 " ============================================================================
@@ -10,7 +9,8 @@ if exists("g:loaded_Molly") || &cp
   finish
 endif
 let g:loaded_Molly = 1
-let s:Molly_version = '0.0.2'
+let s:Molly_version = '0.0.3'
+let s:bufferOpen = 0
 
 if !exists("g:MollyMaxSort")
   let g:MollyMaxSort = 750
@@ -19,17 +19,20 @@ endif
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>x :Molly<CR>
 
-
 function! s:MollyController()
-  execute "sp molly"
-  call s:BindKeys()
-  call s:SetLocals()
-
-  if !exists("s:mollyrunonce")
-    call s:MollySetup()
-    let s:mollyrunonce = 1
+  if s:bufferOpen
+    call s:ShowBuffer()
+  else
+    let s:bufferOpen = 1
+    execute "sp molly"
+    call s:BindKeys()
+    call s:SetLocals()
+    if !exists("s:mollyrunonce")
+      call s:MollySetup()
+      let s:mollyrunonce = 1
+    endif
+    call s:WriteToBuffer(s:filteredlist)
   endif
-  call s:WriteToBuffer(s:filteredlist)
 endfunction
 
 function s:MollySetup()
@@ -128,13 +131,12 @@ endfunction
 
 function s:HandleKeyCancel()
   call s:ResetGlobals()
-
-  execute "q!"
+  call s:HideBuffer()
 endfunction
 
 function s:AcceptSelection(action)
   let filename = getline(".")
-  execute "q!"
+  call s:HideBuffer()
   execute a:action . " " . filename
   unlet filename
   call s:ResetGlobals()
@@ -152,13 +154,18 @@ function s:HandleKeyAcceptSelectionSplit()
   call s:AcceptSelection("sp")
 endfunction
 
-function s:ClearBuffer()
-  execute ":1,$d"
+function s:HandleKeyAcceptSelectionTab()
+  let filename = getline(".")
+  call s:HideBuffer()
+  execute "tabnew"
+  execute "e " . filename
+  unlet filename
+  call s:ResetGlobals()
 endfunction
 
 function s:SetLocals()
-  setlocal bufhidden=wipe
-  setlocal buftype=nofile
+  setlocal bufhidden=hide
+  setlocal buftype=nowrite
   setlocal noswapfile
   setlocal nowrap
   setlocal nonumber
@@ -169,6 +176,18 @@ function s:SetLocals()
   setlocal nobuflisted
   setlocal textwidth=0
   setlocal cursorline
+endfunction
+
+function s:ClearBuffer()
+  execute ":1,$d"
+endfunction
+
+function s:HideBuffer()
+  execute ":hid"
+endfunction
+
+function s:ShowBuffer()
+  execute ":sb molly"
 endfunction
 
 function s:ExecuteQuery()
