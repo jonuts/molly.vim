@@ -33,7 +33,7 @@ function! s:MollyController()
 endfunction
 
 function s:MollySetup()
-  let s:filelist = split(system('find . ! -regex ".*/\..*" -type f -print'), "\n")
+  let s:filelist = split(globpath(".", "**"), "\n")
   call s:ResetGlobals()
 endfunction
 
