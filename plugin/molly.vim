@@ -134,9 +134,16 @@ function s:HandleKeyCancel()
   call s:HideBuffer()
 endfunction
 
-function s:AcceptSelection(action)
+function s:AcceptSelection(action, ...)
   let filename = getline(".")
   call s:HideBuffer()
+
+  if a:0 > 0
+    for arg in a:000
+      execute arg
+    endfor
+  endif
+
   execute a:action . " " . filename
   unlet filename
   call s:ResetGlobals()
@@ -155,12 +162,7 @@ function s:HandleKeyAcceptSelectionSplit()
 endfunction
 
 function s:HandleKeyAcceptSelectionTab()
-  let filename = getline(".")
-  call s:HideBuffer()
-  execute "tabnew"
-  execute "e " . filename
-  unlet filename
-  call s:ResetGlobals()
+  call s:AcceptSelection("e", "tabnew")
 endfunction
 
 function s:SetLocals()
