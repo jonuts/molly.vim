@@ -118,7 +118,7 @@ function s:HandleKeyCursorRight()
 endfunction
 
 function s:HandleKeyBackspace()
-  if len(s:query) <= 0
+  if !len(s:query)
     return 0
   endif
 
@@ -197,7 +197,7 @@ function s:ExecuteQuery()
   let matcher = join(querycharlist, '.*')
   let filesorter = {}
   let sortedlist = []
-  let dosort = len(s:filteredlist) <= g:MollyMaxSort
+  let dosort = len(s:query) > 1 && len(s:filteredlist) <= g:MollyMaxSort
 
   " Filter out filenames that do not match
   let index = 0
